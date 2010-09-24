@@ -1,0 +1,26 @@
+'winrm' can be used just like 'run'.  For instance:
+
+task :ipconfig, :roles => :winrm do
+  winrm 'ipconfig'
+end
+
+This will run ipconfig across all hosts in the :winrm role.
+
+'winrm' will also accept a block exactly like 'run':
+
+task :ipconfig, :roles => :winrm do
+  host_data = {}
+  winrm 'ipconfig' do |channel, stream, data|
+    host_data[channel[:host]] = "" unless host_data[channel[:host]].is_a?(String)
+    host_data[channel[:host]] << data
+  end
+
+  host_data.each_pair do |host,data|
+    puts "HOST: #{host}"
+    puts "---------------------------------------"
+    puts data
+    puts "---------------------------------------"
+  end
+end
+
+
