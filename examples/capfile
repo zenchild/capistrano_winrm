@@ -1,0 +1,24 @@
+require 'capistrano_winrm'
+
+# The ssl port will either be 443 for older WinRM implementations or 5986 for new versions.
+role :winrm, 'myhost:5986'
+set :winrm_user, 'user'
+set :winrm_password, 'pass'
+set :winrm_ssl_ca_store, '/etc/ssl/certs'
+
+desc 'use "winrm" to run a test task'
+task :testwinrm, :roles => :winrm do
+  host_data = {}
+  cmd = 'ipconfig'
+  winrm cmd do |channel, stream, data|
+    host_data[channel[:host]] = "" unless host_data[channel[:host]].is_a?(String)
+    host_data[channel[:host]] << data
+  end
+
+  host_data.each_pair do |host,data|
+    puts "HOST: #{host}"
+    puts "---------------------------------------"
+    puts data
+    puts "---------------------------------------"
+  end
+end
