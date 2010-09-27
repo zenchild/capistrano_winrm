@@ -13,6 +13,8 @@ BLOG:  http://distributed-frostbite.blogspot.com/
 Add me in LinkedIn:  http://www.linkedin.com/in/danwanek
 
 --------------------------------------------------------------------------
+INSTALL (Resides on rubygems.org):
+gem install -r capistrano_winrm
 
 TO USE:
 require 'capistrano_winrm'
