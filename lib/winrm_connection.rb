@@ -1,15 +1,17 @@
 require 'winrm'
 
 class WINRM
+
   attr_reader :server
   alias :xserver :server
 
-  def initialize(user, pass, endpoint = nil, ssl_ca_store = nil)
+  def initialize(user = nil, pass = nil, ssl_ca_store = nil, krb5_realm = nil)
     @user = user
     @pass = pass
-    @endpoint = endpoint
     @ssl_ca_store = ssl_ca_store
+    @krb5_realm = krb5_realm
     @int_hash = {}
+    @server = nil
   end
 
   def [](key)
@@ -21,9 +23,21 @@ class WINRM
   end
 
   def setup_connection(server, options)
+    puts "........ #{self.class.name}#winrm_run, #{server}"
     @server = server
-    @int_hash[:options] = options
-    @int_hash[:server] = server
+    #@int_hash[:options] = options
+    #@int_hash[:server] = server
+    http_method = ( server.port.to_s=~/(443|5986)/ ? 'https' : 'http' )
+    endpoint = "#{http_method}://#{server}/wsman"
+    unless(@krb5_realm.nil?)
+      @inst = WinRM::WinRMWebService.new(endpoint, :kerberos, :realm => @krb5_realm)
+    else
+      if @ssl_ca_store.nil?
+        @inst = WinRM::WinRMWebService.new(endpoint, :plaintext, :user => @user, :pass => @pass)
+      else
+        @inst = WinRM::WinRMWebService.new(endpoint, :ssl, :user => @user, :pass => @pass, :ca_trust_path => @ssl_ca_store)
+      end
+    end
   end
 
   def open_channel
@@ -31,13 +45,7 @@ class WINRM
   end
 
   def exec(cmd)
-    http_method = ( server.port.to_s=~/(443|5986)/ ? 'https' : 'http' )
-    endpoint = @endpoint ? @endpoint : "#{http_method}://#{server}/wsman"
-    WinRM::WinRM.endpoint = endpoint
-    WinRM::WinRM.set_auth(@user, @pass)
-    WinRM::WinRM.set_ca_trust_path(@ssl_ca_store) unless @ssl_ca_store.nil?
-    inst = WinRM::WinRM.instance
-    @ios = inst.cmd(cmd)
+    @ios = @inst.cmd(cmd)
   end
 
   def process_data

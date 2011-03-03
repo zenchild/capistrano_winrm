@@ -4,16 +4,16 @@ module Capistrano
       class WinRMConnectionFactory #:nodoc:
         def initialize(options)
           @options = options
-          @winrm = WINRM.new(options[:winrm_user], options[:winrm_password], nil, options[:winrm_ssl_ca_store])
         end
 
         def connect_to(server)
-          @winrm.setup_connection(server, @options)
-          @winrm
+          winrm = WINRM.new(@options[:winrm_user], @options[:winrm_password], @options[:winrm_ssl_ca_store], @options[:winrm_krb5_realm])
+          winrm.setup_connection(server, @options)
+          winrm
         end
       end
       
-      # Returns the object responsible for establishing new SSH connections.
+      # Returns the object responsible for establishing new connections.
       # The factory will respond to #connect_to, which can be used to
       # establish connections to servers defined via ServerDefinition objects.
       def connection_factory
