@@ -7,9 +7,7 @@ module Capistrano
         end
 
         def connect_to(server)
-          winrm = WINRM.new(@options[:winrm_user], @options[:winrm_password], @options[:winrm_ssl_ca_store], @options[:winrm_krb5_realm])
-          winrm.setup_connection(server, @options)
-          winrm
+          WINRM.new(server, @options)
         end
       end
       

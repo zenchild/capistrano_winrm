@@ -5,13 +5,10 @@ class WINRM
   attr_reader :server
   alias :xserver :server
 
-  def initialize(user = nil, pass = nil, ssl_ca_store = nil, krb5_realm = nil)
-    @user = user
-    @pass = pass
-    @ssl_ca_store = ssl_ca_store
-    @krb5_realm = krb5_realm
-    @int_hash = {}
-    @server = nil
+  def initialize(server, opts)
+    @server = server
+    @int_hash = {:options => opts, :server => server}
+    @winrm = establish_winrm(opts)
   end
 
   def [](key)
@@ -22,30 +19,12 @@ class WINRM
     @int_hash[key.to_sym] = value
   end
 
-  def setup_connection(server, options)
-    puts "........ #{self.class.name}#winrm_run, #{server}"
-    @server = server
-    #@int_hash[:options] = options
-    #@int_hash[:server] = server
-    http_method = ( server.port.to_s=~/(443|5986)/ ? 'https' : 'http' )
-    endpoint = "#{http_method}://#{server}/wsman"
-    unless(@krb5_realm.nil?)
-      @inst = WinRM::WinRMWebService.new(endpoint, :kerberos, :realm => @krb5_realm)
-    else
-      if @ssl_ca_store.nil?
-        @inst = WinRM::WinRMWebService.new(endpoint, :plaintext, :user => @user, :pass => @pass)
-      else
-        @inst = WinRM::WinRMWebService.new(endpoint, :ssl, :user => @user, :pass => @pass, :ca_trust_path => @ssl_ca_store)
-      end
-    end
-  end
-
   def open_channel
     yield self
   end
 
   def exec(cmd)
-    @ios = @inst.cmd(cmd)
+    @ios = @winrm.cmd(cmd)
   end
 
   def process_data
@@ -61,5 +40,26 @@ class WINRM
   def on_extended_data; self; end
   def on_request(req_type); self; end
   def on_close; self; end
+
+
+  private
+
+  # Create a new WinRM instance
+  # @param [Hash] opts the option hash that was passed to initialize
+  # @return [WinRM] a new WinRM connection for a particular endpoint
+  def establish_winrm(opts)
+    http_method = ( server.port.to_s=~/(443|5986)/ ? 'https' : 'http' )
+    endpoint = "#{http_method}://#{server}/wsman"
+    if opts[:winrm_krb5_realm]
+      inst = WinRM::WinRMWebService.new(endpoint, :kerberos, :realm => opts[:winrm_krb5_realm])
+    else
+      unless opts[:winrm_ssl_ca_store]
+        inst = WinRM::WinRMWebService.new(endpoint, :plaintext, :user => opts[:winrm_user], :pass => opts[:winrm_password])
+      else
+        inst = WinRM::WinRMWebService.new(endpoint, :ssl, :user => opts[:winrm_user], :pass => opts[:winrm_password], :ca_trust_path => opts[:winrm_ssl_ca_store])
+      end
+    end
+    inst
+  end
 
 end
