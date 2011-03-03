@@ -17,10 +17,7 @@ INSTALL (Resides on rubygems.org):
 gem install -r capistrano_winrm
 
 TO USE:
-require 'capistrano_winrm'
-set :winrm_user, 'myuser'
-set :winrm_password, 'mypass'
-set :winrm_ssl_ca_store, '/path/to/ssl/certs' # usually /etc/ssl/certs
+See examples/capfile
 
 --------------------------------------------------------------------------
 
