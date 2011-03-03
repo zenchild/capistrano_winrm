@@ -1,15 +1,12 @@
 require 'capistrano_winrm'
 
 # The ssl port will either be 443 for older WinRM implementations or 5986 for new versions.
-role :winrm, 'myhost:5986'
-set :winrm_user, 'user'
-set :winrm_password, 'pass'
-set :winrm_ssl_ca_store, '/etc/ssl/certs'
+role :win_domain, 'myhost:5985'
+role :win_standalone, 'myhost-allalone:5985'
 
-desc 'use "winrm" to run a test task'
-task :testwinrm, :roles => :winrm do
+def winrm_netstat
   host_data = {}
-  cmd = 'ipconfig'
+  cmd = 'netstat -an'
   winrm cmd do |channel, stream, data|
     host_data[channel[:host]] = "" unless host_data[channel[:host]].is_a?(String)
     host_data[channel[:host]] << data
@@ -21,4 +18,25 @@ task :testwinrm, :roles => :winrm do
     puts data
     puts "---------------------------------------"
   end
+end
+
+task :winrm_krb5, :roles => :win_domain do
+  set :winrm_krb5_realm, 'EXAMPLE.COM'
+  winrm_netstat
+  unset :winrm_krb5_realm
+end
+
+task :winrm_plain, :roles => :win_standalone do
+  set :winrm_user, 'myuser'
+  set :winrm_password, 'mypass'
+  #set :winrm_ssl_ca_store, '/etc/ssl/certs'
+  winrm_netstat
+  #unset :winrm_ssl_ca_store
+  unset :winrm_user
+  unset :winrm_password
+end
+
+task :allwinrm do
+  winrm_krb5
+  winrm_plain
 end
