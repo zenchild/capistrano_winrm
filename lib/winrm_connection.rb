@@ -14,7 +14,7 @@ class WINRM
   def [](key)
     @int_hash[key.to_sym]
   end
-  
+
   def []=(key, value)
     @int_hash[key.to_sym] = value
   end
@@ -50,13 +50,24 @@ class WINRM
   def establish_winrm(opts)
     http_method = ( server.port.to_s=~/(443|5986)/ ? 'https' : 'http' )
     endpoint = "#{http_method}://#{server}/wsman"
+
+    transport_opts = {}
+    transport_opts[:disable_sspi] = opts[:winrm_disable_sspi] unless opts[:winrm_disable_sspi].nil?
+    transport_opts[:basic_auth_only] = opts[:winrm_basic_auth_only] unless opts[:winrm_basic_auth_only].nil?
+
     if opts[:winrm_krb5_realm]
-      inst = WinRM::WinRMWebService.new(endpoint, :kerberos, :realm => opts[:winrm_krb5_realm])
+      transport_opts[:realm] = opts[:winrm_krb5_realm]
+      inst = WinRM::WinRMWebService.new(endpoint, :kerberos, transport_opts)
     else
       unless opts[:winrm_ssl_ca_store]
-        inst = WinRM::WinRMWebService.new(endpoint, :plaintext, :user => opts[:winrm_user], :pass => opts[:winrm_password])
+        transport_opts[:user] = opts[:winrm_user]
+        transport_opts[:pass] = opts[:winrm_password]
+        inst = WinRM::WinRMWebService.new(endpoint, :plaintext, transport_opts)
       else
-        inst = WinRM::WinRMWebService.new(endpoint, :ssl, :user => opts[:winrm_user], :pass => opts[:winrm_password], :ca_trust_path => opts[:winrm_ssl_ca_store])
+        transport_opts[:user] = opts[:winrm_user]
+        transport_opts[:pass] = opts[:winrm_password]
+        transport_opts[:ca_trust_path] = opts[:winrm_ssl_ca_store]
+        inst = WinRM::WinRMWebService.new(endpoint, :ssl, transport_opts)
       end
     end
     inst

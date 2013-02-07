@@ -25,6 +25,6 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = %w(README)
 
   s.required_ruby_version	= '>= 1.9.0'
-  s.add_runtime_dependency  'capistrano', '~> 2.5.18'
-  s.add_runtime_dependency  'winrm', '~> 1.0.0'
+  s.add_runtime_dependency  'capistrano', '~> 2.14.1'
+  s.add_runtime_dependency  'winrm', '~> 1.1.2'
 end
